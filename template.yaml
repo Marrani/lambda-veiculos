@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Plataforma de Revenda de Veículos - Gerenciamento de Veículos
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Tracing: Active
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DB_TABLE_NAME: "Veiculos"
+
+Resources:
+  CriarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/veiculos/
+      Handler: criar_veiculo.lambda_handler
+      Events:
+        CriarVeiculoApi:
+          Type: Api
+          Properties:
+            Path: /veiculos
+            Method: post
+
+  EditarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/veiculos/
+      Handler: editar_veiculo.lambda_handler
+      Events:
+        EditarVeiculoApi:
+          Type: Api
+          Properties:
+            Path: /veiculos/{id}
+            Method: put
+
+  ListarVeiculosDisponiveisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/veiculos/
+      Handler: listar_veiculos_disponiveis.lambda_handler
+      Events:
+        ListarVeiculosDisponiveisApi:
+          Type: Api
+          Properties:
+            Path: /veiculos/disponiveis
+            Method: get
+
+  ListarVeiculosVendidosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/veiculos/
+      Handler: listar_veiculos_vendidos.lambda_handler
+      Events:
+        ListarVeiculosVendidosApi:
+          Type: Api
+          Properties:
+            Path: /veiculos/vendidos
+            Method: get
+
+Outputs:
+  CriarVeiculoApi:
+    Description: API Gateway endpoint URL for CriarVeiculo function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos"
+  
+  EditarVeiculoApi:
+    Description: API Gateway endpoint URL for EditarVeiculo function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}"
+
+  ListarVeiculosDisponiveisApi:
+    Description: API Gateway endpoint URL for ListarVeiculosDisponiveis function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/disponiveis"
+
+  ListarVeiculosVendidosApi:
+    Description: API Gateway endpoint URL for ListarVeiculosVendidos function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/vendidos"
