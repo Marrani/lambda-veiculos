@@ -13,6 +13,10 @@ def lambda_handler(event, context):
         )
         
         veiculos = sorted(resposta.get('Items', []), key=lambda x: x['preco'])
+
+        for item in veiculos:
+            if 'preco' in item and isinstance(item['preco'], Decimal):
+                item['preco'] = float(item['preco'])
         
         return {
             'statusCode': 200,

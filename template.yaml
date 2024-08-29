@@ -64,6 +64,41 @@ Resources:
             Path: /veiculos/vendidos
             Method: get
 
+  ReservarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/veiculos/
+      Handler: reservar_veiculo.lambda_handler
+      Events:
+        ReservarVeiculoApi:
+          Type: Api
+          Properties:
+            Path: /veiculos/{id}/reservar
+            Method: post
+
+  ProcessarPagamentoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/pagamentos/
+      Handler: processar_pagamento.lambda_handler
+      Events:
+        ProcessarPagamentoApi:
+          Type: Api
+          Properties:
+            Path: /veiculos/{id}/pagamento
+            Method: post
+
+  BaixarEstoqueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/estoque/
+      Handler: baixar_estoque.lambda_handler
+      Events:
+        SQSQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-1:360478535176:atualiza-estoque        
+                                  
 Outputs:
   CriarVeiculoApi:
     Description: API Gateway endpoint URL for CriarVeiculo function
@@ -80,3 +115,11 @@ Outputs:
   ListarVeiculosVendidosApi:
     Description: API Gateway endpoint URL for ListarVeiculosVendidos function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/vendidos"
+
+  ReservarVeiculoApi:
+    Description: API Gateway endpoint URL for ReservarVeiculo function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}/reservar"
+
+  ProcessarPagamentoApi:
+    Description: API Gateway endpoint URL for ProcessarPagamento function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}/pagamento"  
