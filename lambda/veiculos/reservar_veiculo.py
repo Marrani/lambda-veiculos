@@ -3,15 +3,17 @@ import os
 import json
 import uuid
 
+# Configuração do DynamoDB
 dynamodb = boto3.resource('dynamodb')
 veiculos_table = dynamodb.Table('Veiculos')
+clientes_table = dynamodb.Table('Clientes')
 
 def gerar_codigo_pagamento():
     return str(uuid.uuid4())
 
 def lambda_handler(event, context):
     veiculo_id = event['pathParameters']['id']
-    comprador_id = event['pathParameters']['id_comprador']
+    comprador_id = event['body'].get('id_comprador')
 
     # Verifica se o veículo está disponível
     try:
@@ -23,14 +25,14 @@ def lambda_handler(event, context):
                 'statusCode': 404,
                 'body': json.dumps({'error': 'Veículo não encontrado'})
             }
-        
+
         if veiculo.get('reservado', False):
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'Veículo já está reservado'})
             }
 
-        if veiculo['disponivel'] != True:
+        if veiculo.get('disponivel', False) != True:
             return {
                 'statusCode': 400,
                 'body': json.dumps({'error': 'Veículo não está disponível para reserva'})
@@ -40,6 +42,23 @@ def lambda_handler(event, context):
         return {
             'statusCode': 500,
             'body': json.dumps({'error': f'Erro ao verificar veículo: {str(e)}'})
+        }
+
+    # Verifica se o comprador está cadastrado
+    try:
+        cliente_response = clientes_table.get_item(Key={'id': comprador_id})
+        cliente = cliente_response.get('Item')
+
+        if not cliente:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': 'Comprador não cadastrado'})
+            }
+
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': f'Erro ao verificar comprador: {str(e)}'})
         }
 
     # Atualiza o status do veículo para reservado

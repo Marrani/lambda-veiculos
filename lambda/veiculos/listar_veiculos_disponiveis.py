@@ -4,7 +4,6 @@ import logging
 from botocore.exceptions import ClientError
 from decimal import Decimal
 
-# Configurar o logger
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -23,13 +22,12 @@ def lambda_handler(event, context):
         veiculos = resposta.get('Items', [])
         logger.info(f"Itens retornados da consulta: {veiculos}")
         
-        # Converter Decimal para float e ordenar
         veiculos_sorted = sorted(
             veiculos, 
             key=lambda x: float(x.get('preco', 0)) if isinstance(x.get('preco'), Decimal) else float(x.get('preco', 0))
         )
         
-        # Converter Decimal para float em todos os itens
+
         for item in veiculos_sorted:
             if 'preco' in item and isinstance(item['preco'], Decimal):
                 item['preco'] = float(item['preco'])

@@ -16,110 +16,127 @@ Globals:
         DB_TABLE_NAME: "Veiculos"
 
 Resources:
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "DynamoDBAndSQSAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:GetItem"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                Resource: 
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Veiculos"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Clientes"
+              - Effect: "Allow"
+                Action:
+                  - "sqs:SendMessage"
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                  - "sqs:GetQueueAttributes"
+                Resource: 
+                  - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:atualiza-estoque"
+
   CriarVeiculoFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "CriarVeiculoFunction"
       CodeUri: lambda/veiculos/
       Handler: criar_veiculo.lambda_handler
-      Events:
-        CriarVeiculoApi:
-          Type: Api
-          Properties:
-            Path: /veiculos
-            Method: post
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   EditarVeiculoFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "EditarVeiculoFunction"
       CodeUri: lambda/veiculos/
       Handler: editar_veiculo.lambda_handler
-      Events:
-        EditarVeiculoApi:
-          Type: Api
-          Properties:
-            Path: /veiculos/{id}
-            Method: put
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   ListarVeiculosDisponiveisFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "ListarVeiculosDisponiveisFunction"
       CodeUri: lambda/veiculos/
       Handler: listar_veiculos_disponiveis.lambda_handler
-      Events:
-        ListarVeiculosDisponiveisApi:
-          Type: Api
-          Properties:
-            Path: /veiculos/disponiveis
-            Method: get
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   ListarVeiculosVendidosFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "ListarVeiculosVendidosFunction"
       CodeUri: lambda/veiculos/
       Handler: listar_veiculos_vendidos.lambda_handler
-      Events:
-        ListarVeiculosVendidosApi:
-          Type: Api
-          Properties:
-            Path: /veiculos/vendidos
-            Method: get
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   ReservarVeiculoFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "ReservarVeiculoFunction"
       CodeUri: lambda/veiculos/
       Handler: reservar_veiculo.lambda_handler
-      Events:
-        ReservarVeiculoApi:
-          Type: Api
-          Properties:
-            Path: /veiculos/{id}/reservar
-            Method: post
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   ProcessarPagamentoFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "ProcessarPagamentoFunction"
       CodeUri: lambda/pagamentos/
       Handler: processar_pagamento.lambda_handler
-      Events:
-        ProcessarPagamentoApi:
-          Type: Api
-          Properties:
-            Path: /veiculos/{id}/pagamento
-            Method: post
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   BaixarEstoqueFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: "BaixarEstoqueFunction"
       CodeUri: lambda/estoque/
       Handler: baixar_estoque.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
       Events:
         SQSQueueEvent:
           Type: SQS
           Properties:
             Queue: arn:aws:sqs:us-east-1:360478535176:atualiza-estoque        
-                                  
+
 Outputs:
-  CriarVeiculoApi:
-    Description: API Gateway endpoint URL for CriarVeiculo function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos"
+  CriarVeiculoFunctionArn:
+    Description: ARN for CriarVeiculo function
+    Value: !GetAtt CriarVeiculoFunction.Arn
   
-  EditarVeiculoApi:
-    Description: API Gateway endpoint URL for EditarVeiculo function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}"
+  EditarVeiculoFunctionArn:
+    Description: ARN for EditarVeiculo function
+    Value: !GetAtt EditarVeiculoFunction.Arn
 
-  ListarVeiculosDisponiveisApi:
-    Description: API Gateway endpoint URL for ListarVeiculosDisponiveis function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/disponiveis"
+  ListarVeiculosDisponiveisFunctionArn:
+    Description: ARN for ListarVeiculosDisponiveis function
+    Value: !GetAtt ListarVeiculosDisponiveisFunction.Arn
 
-  ListarVeiculosVendidosApi:
-    Description: API Gateway endpoint URL for ListarVeiculosVendidos function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/vendidos"
+  ListarVeiculosVendidosFunctionArn:
+    Description: ARN for ListarVeiculosVendidos function
+    Value: !GetAtt ListarVeiculosVendidosFunction.Arn
 
-  ReservarVeiculoApi:
-    Description: API Gateway endpoint URL for ReservarVeiculo function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}/reservar"
+  ReservarVeiculoFunctionArn:
+    Description: ARN for ReservarVeiculo function
+    Value: !GetAtt ReservarVeiculoFunction.Arn
 
-  ProcessarPagamentoApi:
-    Description: API Gateway endpoint URL for ProcessarPagamento function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/veiculos/{id}/pagamento"  
+  ProcessarPagamentoFunctionArn:
+    Description: ARN for ProcessarPagamento function
+    Value: !GetAtt ProcessarPagamentoFunction.Arn
+
+  BaixarEstoqueFunctionArn:
+    Description: ARN for BaixarEstoque function
+    Value: !GetAtt BaixarEstoqueFunction.Arn
