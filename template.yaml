@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Plataforma de Revenda de Veículos - Gerenciamento de Veículos
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Tracing: Active
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DB_TABLE_NAME: "Veiculos"
+
+Resources:
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "DynamoDBAndSQSAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:GetItem"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                Resource: 
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Veiculos"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Clientes"
+              - Effect: "Allow"
+                Action:
+                  - "sqs:SendMessage"
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                  - "sqs:GetQueueAttributes"
+                Resource: 
+                  - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:atualiza-estoque"
+
+  CriarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "CriarVeiculoFunction"
+      CodeUri: lambda/veiculos/
+      Handler: criar_veiculo.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  EditarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "EditarVeiculoFunction"
+      CodeUri: lambda/veiculos/
+      Handler: editar_veiculo.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ListarVeiculosDisponiveisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "ListarVeiculosDisponiveisFunction"
+      CodeUri: lambda/veiculos/
+      Handler: listar_veiculos_disponiveis.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ListarVeiculosVendidosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "ListarVeiculosVendidosFunction"
+      CodeUri: lambda/veiculos/
+      Handler: listar_veiculos_vendidos.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ReservarVeiculoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "ReservarVeiculoFunction"
+      CodeUri: lambda/veiculos/
+      Handler: reservar_veiculo.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ProcessarPagamentoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "ProcessarPagamentoFunction"
+      CodeUri: lambda/pagamentos/
+      Handler: processar_pagamento.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  BaixarEstoqueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: "BaixarEstoqueFunction"
+      CodeUri: lambda/estoque/
+      Handler: baixar_estoque.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        SQSQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-1:360478535176:atualiza-estoque        
+
+Outputs:
+  CriarVeiculoFunctionArn:
+    Description: ARN for CriarVeiculo function
+    Value: !GetAtt CriarVeiculoFunction.Arn
+  
+  EditarVeiculoFunctionArn:
+    Description: ARN for EditarVeiculo function
+    Value: !GetAtt EditarVeiculoFunction.Arn
+
+  ListarVeiculosDisponiveisFunctionArn:
+    Description: ARN for ListarVeiculosDisponiveis function
+    Value: !GetAtt ListarVeiculosDisponiveisFunction.Arn
+
+  ListarVeiculosVendidosFunctionArn:
+    Description: ARN for ListarVeiculosVendidos function
+    Value: !GetAtt ListarVeiculosVendidosFunction.Arn
+
+  ReservarVeiculoFunctionArn:
+    Description: ARN for ReservarVeiculo function
+    Value: !GetAtt ReservarVeiculoFunction.Arn
+
+  ProcessarPagamentoFunctionArn:
+    Description: ARN for ProcessarPagamento function
+    Value: !GetAtt ProcessarPagamentoFunction.Arn
+
+  BaixarEstoqueFunctionArn:
+    Description: ARN for BaixarEstoque function
+    Value: !GetAtt BaixarEstoqueFunction.Arn
