@@ -4,11 +4,11 @@ import os
 import random
 
 sqs = boto3.client('sqs')
-queue_url = 'arn:aws:sqs:us-east-1:360478535176:atualiza-estoque'
+queue_url = 'https://sqs.us-east-1.amazonaws.com/360478535176/atualiza-estoque'
 
 def lambda_handler(event, context):
     body = json.loads(event['body'])
-    codigo_pagamento = body.get('codigo_pagamento')
+    codigo_pagamento = body['codigo_pagamento']
 
     if not codigo_pagamento:
         return {
