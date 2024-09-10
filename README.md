@@ -21,6 +21,10 @@ Este projeto utiliza vários recursos da AWS, como funções Lambda, DynamoDB, S
 - **ProcessarPagamentoFunction**: Processa o pagamento de um veículo reservado.
 - **BaixarEstoqueFunction**: Atualiza o estoque de veículos vendidos a partir de mensagens SQS.
 
+## Desenho da Arquitetura
+
+![Arquitetura mducati](https://github.com/user-attachments/assets/f98254a8-7d8f-41fe-b141-3ae03bf49272)
+
 ## Fluxo de Compra
 
 O processo de compra de um veículo é composto pelos seguintes passos:
