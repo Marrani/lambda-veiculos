@@ -38,6 +38,50 @@ O processo de compra de um veículo é composto pelos seguintes passos:
    - **Se o Pagamento foi Bem-Sucedido**: A função baixa o estoque do veículo vendido.
    - **Se o Pagamento Falhou**: A função realiza um rollback, revertendo o veículo para o status de disponível.
 
+### Justificativa dos Serviços Utilizados
+
+- **Serverless**: A utilização de funções Lambda permite escalabilidade automática e gestão simplificada do código sem a necessidade de provisionar ou gerenciar servidores.
+- **DynamoDB**: Um banco de dados NoSQL gerenciado, ideal para operações rápidas e escaláveis.
+- **SQS**: Facilita a comunicação assíncrona e desacoplada entre funções Lambda, garantindo robustez e resiliência.
+- **API Gateway**: Gerencia e protege as APIs, facilitando a integração com clientes e serviços externos.
+- **Cognito**: Fornece um sistema seguro e escalável de autenticação e autorização.
+
+### Segurança dos Dados
+
+#### Dados Armazenados
+
+- **Veículos**: Dados como modelo, ano, preço e status (disponível/vendido).
+- **Clientes**: Dados pessoais como nome, CPF, e-mail, e informações de pagamento.
+
+#### Dados Sensíveis
+
+- **Informações Pessoais**: CPF, e-mail, e dados de pagamento dos clientes.
+
+#### Políticas de Acesso a Dados
+
+- **IAM Roles**: Políticas que permitem acesso restrito às funções Lambda para interagir com DynamoDB e SQS.
+- **Cognito**: Controle de acesso baseado em tokens de autenticação.
+
+#### Políticas de Segurança da Operação
+
+- **Criptografia**: Dados sensíveis são criptografados em trânsito e em repouso.
+- **Logs**: Monitoramento e logs são gerados para todas as funções Lambda utilizando o CloudWatch.
+
+#### Riscos e Ações de Mitigação
+
+- **Exposição de Dados Sensíveis**: Implementação de criptografia e políticas de acesso restrito.
+- **Falhas na Comunicação SQS**: Garantia de processamento adequado com a verificação de mensagens e rollback em caso de falhas.
+
+## Orquestração SAGA
+
+### Tipo de Orquestração SAGA
+
+**Orquestração baseada em Coreografia**: No padrão de coreografia, cada serviço executa suas tarefas e notifica outros serviços sobre o progresso e resultado da transação. A função Lambda `ProcessarPagamentoFunction` envia uma mensagem para a fila SQS se o pagamento for bem-sucedido. A função `BaixarEstoqueFunction` então consome essas mensagens para atualizar o estoque. Em caso de falha no pagamento, a transação é revertida e o estoque é atualizado conforme necessário.
+
+### Justificativa do Padrão Escolhido
+
+A coreografia é escolhida por sua flexibilidade e escalabilidade, permitindo que cada serviço envolvido na transação execute e notifique seu progresso de forma autônoma. Isso reduz o acoplamento entre os serviços e melhora a resiliência do sistema como um todo.
+
 ## Pré-requisitos
 
 Para utilizar o SAM CLI e implantar esta aplicação, você precisará dos seguintes componentes instalados:
