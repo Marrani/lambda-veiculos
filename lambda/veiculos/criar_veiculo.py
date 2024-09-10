@@ -9,7 +9,7 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event['body'])
         item = {
-            'chassi': body['Chassi'],
+            'chassi': body['chassi'],
             'marca': body['marca'],
             'modelo': body['modelo'],
             'ano': body['ano'],

@@ -13,7 +13,6 @@ tabela_veiculos = dynamodb.Table('Veiculos')
 def lambda_handler(event, context):
     try:
         logger.info("Iniciando a consulta ao DynamoDB")
-        
         resposta = tabela_veiculos.scan(
             FilterExpression='disponivel = :disponivel',
             ExpressionAttributeValues={':disponivel': True}
@@ -22,17 +21,17 @@ def lambda_handler(event, context):
         veiculos = resposta.get('Items', [])
         logger.info(f"Itens retornados da consulta: {veiculos}")
         
-        veiculos_sorted = sorted(
-            veiculos, 
-            key=lambda x: float(x.get('preco', 0)) if isinstance(x.get('preco'), Decimal) else float(x.get('preco', 0))
-        )
-        
-
-        for item in veiculos_sorted:
+        for item in veiculos:
             if 'preco' in item and isinstance(item['preco'], Decimal):
-                item['preco'] = float(item['preco'])
+                item['preco'] = int(item['preco'])
+            if 'ano' in item and isinstance(item['ano'], Decimal):
+                item['ano'] = int(item['ano'])
         
-        logger.info(f"Itens com preço convertido: {veiculos_sorted}")
+        logger.info(f"Itens com preço e ano convertidos: {veiculos}")
+    
+        veiculos_sorted = sorted(veiculos, key=lambda x: x.get('preco', 0))
+    
+        logger.info(f"Itens ordenados pelo preço: {veiculos_sorted}")
         
         return {
             'statusCode': 200,

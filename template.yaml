@@ -27,7 +27,7 @@ Resources:
               Service: "lambda.amazonaws.com"
             Action: "sts:AssumeRole"
       Policies:
-        - PolicyName: "DynamoDBAndSQSAccessPolicy"
+        - PolicyName: "DynamoDBAndSQSAndCloudWatchAccessPolicy"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -50,6 +50,13 @@ Resources:
                   - "sqs:GetQueueAttributes"
                 Resource: 
                   - !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:atualiza-estoque"
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: 
+                  - "arn:aws:logs:*:*:*"
 
   CriarVeiculoFunction:
     Type: AWS::Serverless::Function

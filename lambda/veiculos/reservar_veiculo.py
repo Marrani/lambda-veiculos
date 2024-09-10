@@ -2,22 +2,26 @@ import boto3
 import os
 import json
 import uuid
+import logging
 
 # Configuração do DynamoDB
 dynamodb = boto3.resource('dynamodb')
 veiculos_table = dynamodb.Table('Veiculos')
 clientes_table = dynamodb.Table('Clientes')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def gerar_codigo_pagamento():
     return str(uuid.uuid4())
 
 def lambda_handler(event, context):
-    veiculo_id = event['pathParameters']['id']
-    comprador_id = event['body'].get('id_comprador')
+    chassi = event['pathParameters']['id']
+    body = json.loads(event['body'])
+    cpf = body['cpf']
 
     # Verifica se o veículo está disponível
     try:
-        veiculo_response = veiculos_table.get_item(Key={'id': veiculo_id})
+        veiculo_response = veiculos_table.get_item(Key={'chassi': chassi})
         veiculo = veiculo_response.get('Item')
 
         if not veiculo:
@@ -46,8 +50,12 @@ def lambda_handler(event, context):
 
     # Verifica se o comprador está cadastrado
     try:
-        cliente_response = clientes_table.get_item(Key={'id': comprador_id})
-        cliente = cliente_response.get('Item')
+
+        comprador_response = clientes_table.get_item(Key={'cpf': cpf})
+
+        logger.info(f"comprador: {comprador_response}")
+    
+        cliente = comprador_response.get('Item')
 
         if not cliente:
             return {
@@ -66,12 +74,12 @@ def lambda_handler(event, context):
         codigo_pagamento = gerar_codigo_pagamento()
         
         veiculos_table.update_item(
-            Key={'id': veiculo_id},
-            UpdateExpression="set reservado = :reservado, disponivel = :disponivel, comprador_id = :comprador_id, codigo_pagamento = :codigo_pagamento",
+            Key={'chassi': chassi},
+            UpdateExpression="set reservado = :reservado, disponivel = :disponivel, cpf = :cpf, codigo_pagamento = :codigo_pagamento",
             ExpressionAttributeValues={
                 ':reservado': True,
                 ':disponivel': False,
-                ':comprador_id': comprador_id,
+                ':cpf': cpf,
                 ':codigo_pagamento': codigo_pagamento
             }
         )
