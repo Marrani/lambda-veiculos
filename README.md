@@ -1,4 +1,3 @@
-
 # lambda-veiculos
 
 Este projeto contém o código-fonte e arquivos de suporte para uma aplicação serverless que você pode implantar usando o SAM CLI. Ele inclui as seguintes pastas e arquivos:
@@ -22,6 +21,23 @@ Este projeto utiliza vários recursos da AWS, como funções Lambda, DynamoDB, S
 - **ProcessarPagamentoFunction**: Processa o pagamento de um veículo reservado.
 - **BaixarEstoqueFunction**: Atualiza o estoque de veículos vendidos a partir de mensagens SQS.
 
+## Fluxo de Compra
+
+O processo de compra de um veículo é composto pelos seguintes passos:
+
+1. **Seleção do Veículo**: O cliente seleciona um veículo disponível.
+2. **Reserva do Veículo**: O cliente reserva o veículo, que é marcado como reservado na tabela DynamoDB.
+3. **Código de Pagamento**: O cliente recebe um código de pagamento para o veículo reservado.
+4. **Processo de Pagamento**: O cliente realiza o pagamento utilizando o código recebido.
+
+   - **Caso de Sucesso**: Se o pagamento é bem-sucedido, a função `ProcessarPagamentoFunction` envia uma mensagem para a fila SQS `atualiza-estoque` para atualizar o estoque.
+   - **Caso de Falha**: Se o pagamento falha, a função `ProcessarPagamentoFunction` envia uma mensagem para a mesma fila SQS para tratamento posterior.
+
+5. **Baixa de Estoque**: A função `BaixarEstoqueFunction` é acionada pela fila SQS e realiza o seguinte:
+
+   - **Se o Pagamento foi Bem-Sucedido**: A função baixa o estoque do veículo vendido.
+   - **Se o Pagamento Falhou**: A função realiza um rollback, revertendo o veículo para o status de disponível.
+
 ## Pré-requisitos
 
 Para utilizar o SAM CLI e implantar esta aplicação, você precisará dos seguintes componentes instalados:
@@ -34,77 +50,6 @@ Para utilizar o SAM CLI e implantar esta aplicação, você precisará dos segui
 
 Para compilar e implantar sua aplicação pela primeira vez, execute os seguintes comandos no terminal:
 
-\`\`\`bash
+```bash
 sam build --use-container
 sam deploy --guided
-\`\`\`
-
-O primeiro comando compilará o código-fonte da aplicação. O segundo comando empacota e implanta sua aplicação na AWS, com uma série de perguntas:
-
-- **Stack Name**: Nome da stack a ser criada no CloudFormation.
-- **AWS Region**: Região AWS onde a aplicação será implantada.
-- **Confirm changes before deploy**: Selecione "yes" para revisar as mudanças antes de implantar.
-- **Allow SAM CLI IAM role creation**: Permita que o SAM CLI crie as funções IAM necessárias.
-- **Save arguments to samconfig.toml**: Escolha "yes" para salvar as configurações para futuras implantações.
-
-O URL do endpoint do API Gateway será exibido nos valores de saída após a implantação.
-
-## Testando localmente
-
-Você pode construir sua aplicação localmente com o comando:
-
-\`\`\`bash
-sam build --use-container
-\`\`\`
-
-Teste uma única função Lambda invocando-a diretamente com um evento de teste JSON. Os eventos de exemplo estão disponíveis na pasta \`events\`.
-
-\`\`\`bash
-sam local invoke CriarVeiculoFunction --event events/event.json
-\`\`\`
-
-Para simular o API Gateway, utilize:
-
-\`\`\`bash
-sam local start-api
-\`\`\`
-
-E então acesse o endpoint local:
-
-\`\`\`bash
-curl http://localhost:3000/veiculos
-\`\`\`
-
-## Logs das funções Lambda
-
-Use o comando \`sam logs\` para visualizar os logs das funções Lambda já implantadas.
-
-\`\`\`bash
-sam logs -n CriarVeiculoFunction --stack-name "lambda-veiculos" --tail
-\`\`\`
-
-## Testes
-
-Os testes estão definidos na pasta \`tests\`. Use o PIP para instalar as dependências de teste e execute os testes:
-
-\`\`\`bash
-pip install -r tests/requirements.txt --user
-# Testes unitários
-python -m pytest tests/unit -v
-# Testes de integração (necessita de deploy)
-AWS_SAM_STACK_NAME="lambda-veiculos" python -m pytest tests/integration -v
-\`\`\`
-
-## Limpeza
-
-Para deletar a aplicação implantada:
-
-\`\`\`bash
-sam delete --stack-name "lambda-veiculos"
-\`\`\`
-
-## Recursos adicionais
-
-- [Documentação do AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html)
-- [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications)
-
